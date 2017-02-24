@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>INDEX</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap-theme.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+</head>
+<body>
+<style>
+    #add{
+        background-color: #cccccc;
+        margin-bottom:  12px;
+    }
+    label{
+        margin-top:  12px;
+    }
+    textarea{
+        margin-bottom: 12px;
+    }
+</style>
+<div class="container">
+    <div class="row">
+        <h1>Easy survey</h1>
+        <div class="navbar navbar-inverse">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#responsive-menu">
+                        <span class="sr-only">Open Nav</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                </div>
+                <div class="collapse navbar-collapse" id="responsive-menu">
+                    <ul class="nav navbar-nav">
+                        <li><a onclick="showAll()">All Surveys</a></li>
+                        <li><a onclick="showForm()">Create Survey</a></li>
+                        <li><a href="#">My Account</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="container" id="parent">
+
+            <label for="title"><h4>Survey`s title: </h4></label>
+            <textarea class="form-control" id="title" rows="2"></textarea><br>
+            
+            <label for="description"><h4>Survey`s description: </h4></label>
+            <textarea class="form-control" id="description" rows="4"></textarea>
+            
+            <label for="question"><h4>Question: </h4></label>
+            <textarea class="form-control" id="question" rows="2"></textarea><br>
+            
+            <button type="button" onclick="newQuestion()">Add Question</button>
+            <button type="button" onclick="create()">Create Survey</button>
+        </div>
+    </div>
+</div>
+<script>
+    showAll();
+    var questions = [];
+
+    function showAll() {
+        $.ajax({
+            url: '/allSurveys',
+            success: function (data) {
+                var parent = document.getElementById('parent');
+                while (parent.firstChild){
+                    parent.removeChild(parent.firstChild);
+                }
+                $.each(data, function(index, element) {
+                    var newAdd = document.createElement('div');
+                    newAdd.setAttribute('class','col-md-8 col-lg-12');
+                    newAdd.setAttribute('id','add');
+                    newAdd.setAttribute('onClick','showSurvey('+element.id+')');
+
+                    var title = document.createElement('h3');
+                    var description = document.createElement('h5');
+
+                    title.innerHTML = element.title;
+
+                    description.innerHTML = element.description;
+
+                    newAdd.appendChild(title);
+                    newAdd.appendChild(description);
+
+                    document.getElementById('parent').appendChild(newAdd);
+                });
+            }
+        });
+    }
+    
+    function showSurvey(surveyID) {
+        $.ajax({
+            url: '/getSurvey/'+surveyID,
+            success: function (data) {
+                var parent = document.getElementById('parent');
+                while (parent.firstChild) {
+                    parent.removeChild(parent.firstChild);
+                }
+
+                var newAdd = document.createElement('div');
+                newAdd.setAttribute('class','col-md-8 col-lg-12');
+                newAdd.setAttribute('id','add');
+
+                var title = document.createElement('h3');
+                var description = document.createElement('h5');
+
+                title.innerHTML = data.title;
+
+                description.innerHTML = data.description;
+
+                newAdd.appendChild(title);
+                newAdd.appendChild(description);
+
+                $.ajax({
+                    url: '/questionsOfSurvey/'+surveyID,
+                    success: function (data) {
+                        $.each(data, function (index, element) {
+                            var quest = document.createElement('h6');
+                            quest.innerHTML = element.question;
+                            newAdd.appendChild(quest);
+                        });
+                    }
+                });
+
+                document.getElementById('parent').appendChild(newAdd);
+            }
+        });
+    }
+
+    function showForm() {
+        var parent = document.getElementById('parent');
+        while (parent.firstChild){
+            parent.removeChild(parent.firstChild);
+        }
+
+        var titleLabel = document.createElement('label');
+        titleLabel.setAttribute('for','title');
+        titleLabel.innerHTML = 'Survey`s title: ';
+
+        var descriptionLabel = document.createElement('label');
+        descriptionLabel.setAttribute('for','description');
+        descriptionLabel.innerHTML = 'Survey`s description: ';
+
+        var questionLabel = document.createElement('label');
+        questionLabel.setAttribute('for','question');
+        questionLabel.innerHTML = 'Question: ';
+
+        var titleText = document.createElement('textarea');
+        titleText.setAttribute('class','form-control');
+        titleText.setAttribute('id','title');
+        titleText.setAttribute('rows','2');
+
+        var descriptionText = document.createElement('textarea');
+        descriptionText.setAttribute('class','form-control');
+        descriptionText.setAttribute('id','description');
+        descriptionText.setAttribute('rows','4');
+
+        var questionText = document.createElement('textarea');
+        questionText.setAttribute('class','form-control');
+        questionText.setAttribute('id','question');
+        questionText.setAttribute('rows','3');
+
+        var questionButton = document.createElement('button');
+        questionButton.setAttribute('type','button');
+        questionButton.setAttribute('onclick','newQuestion()');
+        questionButton.innerHTML = 'Add Question';
+
+        var surveyButton = document.createElement('button');
+        surveyButton.setAttribute('type','button');
+        surveyButton.setAttribute('onclick','create()');
+        surveyButton.innerHTML = 'Create Survey';
+
+        parent.appendChild(titleLabel);
+        parent.appendChild(titleText);
+        parent.appendChild(descriptionLabel);
+        parent.appendChild(descriptionText);
+        parent.appendChild(questionLabel);
+        parent.appendChild(questionText);
+        parent.appendChild(questionButton);
+        parent.appendChild(surveyButton);
+    }
+    function newQuestion() {
+        questions.push(document.getElementById('question').value);
+        document.getElementById('question').value = '';
+        alert('Question added: \n\r'+questions);
+    }
+    
+    function create() {
+        var title  = document.getElementById('title').value;
+        var description  = document.getElementById('description').value;
+        var surveyTransfer = {title : title, description : description, questions : questions};
+        $.ajax({
+            url : "/createSurvey",
+            contentType : 'application/json',
+            data : JSON.stringify(surveyTransfer),
+            type : 'POST',
+            success: function(data) {
+                alert('Survey added');
+                showSurvey(data);
+            },
+            error:  function(xhr, str){
+                alert('Возникла ошибка: ' + xhr.responseCode);
+            }
+        });
+        questions = [];
+    }
+</script>
+</body>
+</html>
